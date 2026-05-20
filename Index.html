@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Квадрат с полями</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 20px; background: #f2f2f7; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+    .card { background: #fff; padding: 24px 20px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width: 90%; width: 320px; text-align: center; }
+    h1 { font-size: 18px; margin: 0 0 16px; color: #1c1c1e; }
+    input[type="file"] { display: none; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 14px 28px; background: #007AFF; color: #fff; border-radius: 14px; cursor: pointer; font-size: 15px; font-weight: 500; width: 100%; box-sizing: border-box; transition: opacity 0.2s; }
+    .btn:active { opacity: 0.8; }
+    #status { margin-top: 16px; font-size: 14px; font-weight: 500; display: none; }
+    #status.success { color: #34C759; }
+    #status.warning { color: #FF9500; }
+    canvas { max-width: 100%; margin-top: 16px; border-radius: 12px; display: none; background: #f5f5f7; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Вертикальное → Квадрат</h1>
+    <label class="btn" for="fileInput">📷 Выбрать фото</label>
+    <input type="file" id="fileInput" accept="image/*">
+    <canvas id="canvas"></canvas>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const status = document.getElementById('status');
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      status.style.display = 'none';
+      canvas.style.display = 'none';
+
+      const img = new Image();
+      img.onload = () => {
+        const size = Math.max(img.width, img.height);
+        canvas.width = size;
+        canvas.height = size;
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, size, size);
+        ctx.drawImage(img, (size - img.width) / 2, (size - img.height) / 2);
+
+        // Определяем исходный формат
+        const mime = file.type || 'image/png';
+        const baseName = file.name.replace(/\.[^/.]+$/, '');
+        const ext = mime.includes('jpeg') ? '.jpg' : mime.includes('png') ? '.png' : '.webp';
+
+        canvas.toBlob((blob) => {
+          const newFileName = `${baseName}_sq${ext}`;
+          
+          // Авто-триггер скачивания
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = newFileName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(a.href);
+
+          // Статус
+          status.className = 'success';
+          status.textContent = `✅ Готово: ${newFileName}`;
+          status.style.display = 'block';
+        }, mime, 0.95);
+      };
+      img.src = URL.createObjectURL(file);
+      fileInput.value = ''; // Разрешает повторный выбор того же файла
+    });
+  </script>
+</body>
+</html>
